@@ -9,7 +9,6 @@ esphome:
 api:
   encryption:
     key: !secret api_key
-  password: ""
 
 ota:
   password: !secret ota_password
