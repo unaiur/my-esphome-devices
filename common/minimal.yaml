@@ -1,0 +1,19 @@
+substitutions:
+  host_name: my-device
+  node_name: My Device
+
+esphome:
+  name: ${host_name}
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Lector-Contador-s2"
+    password: !secret ap_password 
+

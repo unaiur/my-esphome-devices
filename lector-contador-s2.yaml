@@ -1,0 +1,119 @@
+substitutions:
+  node_name: lector-contador-s2
+
+packages:
+  base: !include common/base.yaml
+
+esp32:
+  board: lolin_s2_mini
+  framework: 
+    type: esp-idf
+    version: recommended
+
+# Enable logging
+logger:
+  #level: VERY_VERBOSE
+  hardware_uart: USB_CDC
+
+uart:
+  - id: uart_home
+    tx_pin: GPIO8
+    rx_pin: GPIO6
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    #debug:
+
+  - id: uart_heating
+    tx_pin: GPIO17
+    rx_pin: GPIO21
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 1
+    #debug:
+
+sml:
+  - id: sml_home
+    uart_id: uart_home
+  - id: sml_heating
+    uart_id: uart_heating
+
+sensor:
+  - platform: sml
+    sml_id: sml_home
+    name: "Home Total Energy"
+    obis_code: "1-0:1.8.0"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 4
+    filters:
+      - or:
+        - heartbeat: 20s
+        - delta: 0.1
+      - multiply: 0.0001
+#  - platform: sml
+#    sml_id: sml_home
+#    name: "Home HT Energy (day)"
+#    obis_code: "1-0:1.8.1"
+#    unit_of_measurement: kWh
+#    device_class: energy
+#    state_class: total_increasing
+#    accuracy_decimals: 4
+#    filters:
+#      - delta: 0.1
+#      - multiply: 0.0001
+#  - platform: sml
+#    sml_id: sml_home
+#    name: "Home NT Energy (night)"
+#    obis_code: "1-0:1.8.2"
+#    unit_of_measurement: kWh
+#    device_class: energy
+#    state_class: total_increasing
+#    accuracy_decimals: 4
+#    filters:
+#      - delta: 0.1
+#      - multiply: 0.0001
+  - platform: sml
+    sml_id: sml_heating
+    name: "Heating Total Energy"
+    obis_code: "1-0:1.8.0"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 4
+    filters:
+      - or:
+        - heartbeat: 20s
+        - delta: 0.1
+      - multiply: 0.0001
+  - platform: sml
+    sml_id: sml_heating
+    name: "Heating HT Energy (day)"
+    obis_code: "1-0:1.8.1"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 4
+    filters:
+      - or:
+        - heartbeat: 20s
+        - delta: 0.1
+      - multiply: 0.0001
+  - platform: sml
+    sml_id: sml_heating
+    name: "Heating NT Energy (night)"
+    obis_code: "1-0:1.8.2"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 4
+    filters:
+      - or:
+        - heartbeat: 20s
+        - delta: 0.1
+      - multiply: 0.0001
+  - platform: uptime
+    name: Uptime Sensor

@@ -1,0 +1,161 @@
+packages:
+  base: !include base.yaml
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+
+logger:
+  hardware_uart: UART0
+
+i2c:
+  sda: GPIO12
+  scl: GPIO14
+
+sensor:
+  - platform: ade7953
+    irq_pin: GPIO16
+    active_power_a:
+      id: open_power
+      name: ${node_name} Open Power
+      filters:
+        - multiply: -1
+        - sliding_window_moving_average:
+            window_size: 120
+            send_every: 30
+    active_power_b:
+      id: close_power
+      name: ${node_name} Close Power
+      filters:
+        - multiply: -1
+        - sliding_window_moving_average:
+            window_size: 120
+            send_every: 30
+    current_a:
+      id: open_current
+      internal: true
+    current_b:
+      id: close_current
+      internal: true
+    update_interval: 0.5s
+
+  # NTC Temperature
+  - platform: ntc
+    sensor: temp_resistance_reading
+    name: ${node_name} Temperature
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    calibration:
+      b_constant: 3350
+      reference_resistance: 10kOhm
+      reference_temperature: 298.15K
+    on_value_range:
+      above: 90
+      then: # Security shutdown by overheating
+        - switch.turn_on: _shutdown
+
+  - platform: resistance
+    id: temp_resistance_reading
+    sensor: temp_analog_reading
+    configuration: DOWNSTREAM
+    resistor: 32kOhm
+    internal: true
+
+  - platform: adc
+    id: temp_analog_reading
+    pin: A0
+    update_interval: 30s
+    internal: true
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO13
+    name: ${node_name} Open Button
+    internal: true
+    filters:
+      - invert:
+      - delayed_on: 50ms
+      - delayed_off: 50ms
+    on_state:
+      then:
+        - lambda: !lambda |-
+            auto call = id(my_cover).make_call();
+            if (x) {
+               call.set_command_open();
+            } else {
+               call.set_command_stop();
+            }
+            call.perform();
+
+  - platform: gpio
+    pin:
+      number: GPIO5
+    name: ${node_name} Close Button
+    internal: true
+    filters:
+      - delayed_on: 50ms
+      - delayed_off: 50ms
+    on_state:
+      then:
+        - lambda: !lambda |-
+            auto call = id(my_cover).make_call();
+            if (x) {
+               call.set_command_close();
+            } else {
+               call.set_command_stop();
+            }
+            call.perform();
+
+switch:
+  - platform: shutdown
+    id: _shutdown
+    internal: true
+
+  - platform: gpio
+    id: open_relay
+    pin: GPIO15
+    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true
+    interlock: &interlock [open_relay, close_relay]
+    interlock_wait_time: 500ms
+
+  - platform: gpio
+    id: close_relay
+    pin: GPIO4
+    restore_mode: RESTORE_DEFAULT_OFF
+    internal: true
+    interlock: *interlock
+    interlock_wait_time: 500ms
+
+# Example configuration entry
+cover:
+  - platform: current_based
+    name: ${node_name}
+    id: my_cover
+
+    open_sensor: open_current
+    open_moving_current_threshold: 0.4
+    open_duration: 29s
+    open_action:
+      - switch.turn_on: open_relay
+    close_sensor: close_current
+    close_moving_current_threshold: 0.4
+    close_duration: 29s
+    close_action:
+      - switch.turn_on: close_relay
+    stop_action:
+      - switch.turn_off: close_relay
+      - switch.turn_off: open_relay
+    obstacle_rollback: 30%
+    start_sensing_delay: 1s
+    malfunction_detection: true
+    malfunction_action:
+      then:
+        - logger.log: "Malfunction detected. Relay welded."
+
+status_led:
+  pin:
+    number: GPIO0
+    inverted: yes
+
