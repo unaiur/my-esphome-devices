@@ -20,7 +20,7 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Lector-Contador-s2"
+    ssid: "${host_name}-portal"
     password: !secret ap_password 
 
 captive_portal:
