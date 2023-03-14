@@ -1,6 +1,7 @@
 substitutions:
   host_name: lab-cover
   node_name: Lab Cover
+  invert_open_input: "true"
 
 packages:
   cover: !include common/shelly-2.5-cover.yaml

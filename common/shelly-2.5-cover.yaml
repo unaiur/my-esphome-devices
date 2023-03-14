@@ -1,3 +1,26 @@
+substitutions:
+  # Input mode: straight or swapped
+  input: straight
+  # Should the open input be inverted
+  invert_open_input: "false"
+  # Should the close input be inverted
+  invert_close_input: "false"
+  # Output mode: straight or swapped
+  output: straight
+  # Computed substitutions: DO NOT REDEFINE!!!
+  open_pin_when_input_is_straight: GPIO13
+  close_pin_when_input_is_straight: GPIO5
+  open_pin_when_input_is_swapped: GPIO5
+  close_pin_when_input_is_swapped: GPIO13
+  open_pin_when_output_is_straight: GPIO15
+  close_pin_when_output_is_straight: GPIO4
+  open_current_channel_when_output_is_straight: a
+  close_current_channel_when_output_is_straight: b
+  open_pin_when_output_is_swapped: GPIO4
+  close_pin_when_output_is_swapped: GPIO15
+  open_current_channel_when_output_is_swapped: b
+  close_current_channel_when_output_is_swapped: a
+
 packages:
   base: !include base.yaml
 
@@ -15,26 +38,31 @@ i2c:
 sensor:
   - platform: ade7953
     irq_pin: GPIO16
-    active_power_a:
-      id: open_power
+    voltage:
+      name: ${node_name} Voltage
+      filters:
+        - sliding_window_moving_average:
+            window_size: 120
+            send_every: 30
+
+    active_power_${open_current_channel_when_output_is_${output}}:
       name: ${node_name} Open Power
       filters:
-        - multiply: -1
+        - lambda: return abs(x);
         - sliding_window_moving_average:
             window_size: 120
             send_every: 30
-    active_power_b:
-      id: close_power
+    active_power_${close_current_channel_when_output_is_${output}}:
       name: ${node_name} Close Power
       filters:
-        - multiply: -1
+        - lambda: return abs(x);
         - sliding_window_moving_average:
             window_size: 120
             send_every: 30
-    current_a:
+    current_${open_current_channel_when_output_is_${output}}:
       id: open_current
       internal: true
-    current_b:
+    current_${close_current_channel_when_output_is_${output}}:
       id: close_current
       internal: true
     update_interval: 0.5s
@@ -70,11 +98,11 @@ sensor:
 binary_sensor:
   - platform: gpio
     pin:
-      number: GPIO13
+      number: ${open_pin_when_input_is_${input}}
+      inverted: ${invert_open_input} 
     name: ${node_name} Open Button
     internal: true
     filters:
-      - invert:
       - delayed_on: 50ms
       - delayed_off: 50ms
     on_state:
@@ -90,7 +118,8 @@ binary_sensor:
 
   - platform: gpio
     pin:
-      number: GPIO5
+      number: ${close_pin_when_input_is_${input}}
+      inverted: ${invert_close_input} 
     name: ${node_name} Close Button
     internal: true
     filters:
@@ -114,7 +143,7 @@ switch:
 
   - platform: gpio
     id: open_relay
-    pin: GPIO15
+    pin: ${open_pin_when_output_is_${output}}
     restore_mode: RESTORE_DEFAULT_OFF
     internal: true
     interlock: &interlock [open_relay, close_relay]
@@ -122,7 +151,7 @@ switch:
 
   - platform: gpio
     id: close_relay
-    pin: GPIO4
+    pin: ${close_pin_when_output_is_${output}}
     restore_mode: RESTORE_DEFAULT_OFF
     internal: true
     interlock: *interlock

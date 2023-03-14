@@ -1,13 +1,13 @@
 substitutions:
-  host_name: studio-cover
-  node_name: Studio Cover
-  input: swapped
+  host_name: livingroom-left-cover
+  node_name: Livingroom Left Cover
+  output: swapped
 
 packages:
   cover: !include common/shelly-2.5-cover.yaml
 
 wifi:
   manual_ip:
-    static_ip: 192.168.178.15
+    static_ip: 192.168.178.17
     gateway: 192.168.178.1
     subnet: 255.255.255.0
