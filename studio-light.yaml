@@ -1,0 +1,12 @@
+substitutions:
+  host_name: studio-light
+  node_name: Studio Light
+
+packages:
+  cover: !include common/shelly-1-light.yaml
+
+wifi:
+  manual_ip:
+    static_ip: 192.168.178.14
+    gateway: 192.168.178.1
+    subnet: 255.255.255.0
