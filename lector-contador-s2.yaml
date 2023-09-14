@@ -1,3 +1,7 @@
+esphome:
+  includes:
+    - "custom/Readers.h"
+
 substitutions:
   host_name: lector-contador-s2
   node_name: lector-contador-s2
@@ -52,20 +56,6 @@ text_sensor:
     internal: true
     obis_code: "1-0:1.8.0"
     format: uint
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static int prev_value = 0;
-          int next_value = stoi(x);
-          if (initialized && next_value != prev_value) {
-            auto &accumulator = id(raw_home_accumulator);
-            accumulator += next_value - prev_value;
-            id(raw_home_net_energy).publish_state(accumulator);
-            id(raw_home_net_energy).update();
-          }
-          initialized = true;
-          prev_value = next_value;
 
   - platform: sml
     sml_id: sml_home
@@ -73,20 +63,6 @@ text_sensor:
     internal: true
     obis_code: "1-0:2.8.0"
     format: uint
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static int prev_value = 0;
-          int next_value = stoi(x);
-          if (initialized && next_value != prev_value) {
-            auto &accumulator = id(raw_home_accumulator);
-            accumulator -= next_value - prev_value;
-            id(raw_home_net_energy).publish_state(accumulator);
-            id(raw_home_net_energy).update();
-          }
-          initialized = true;
-          prev_value = next_value;
 
   - platform: sml
     sml_id: sml_heating
@@ -94,20 +70,6 @@ text_sensor:
     internal: true
     obis_code: "1-0:1.8.0"
     format: uint
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static int accumulator = 0;
-          static int prev_value;
-          int next_value = stoi(x);
-          if (initialized) {
-            accumulator = (7 * accumulator + next_value - prev_value) / 8;
-            id(heating_power_total).publish_state(accumulator / 10.0);
-            id(heating_power_total).update();
-          }
-          initialized = true;
-          prev_value = next_value;
 
   - platform: sml
     sml_id: sml_heating
@@ -115,20 +77,6 @@ text_sensor:
     internal: true
     obis_code: "1-0:1.8.1"
     format: uint
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static int accumulator = 0;
-          static int prev_value;
-          int next_value = stoi(x);
-          if (initialized) {
-            accumulator = (7 * accumulator + next_value - prev_value) / 8;
-            id(heating_power_day).publish_state(accumulator / 10.0);
-            id(heating_power_day).update();
-          }
-          initialized = true;
-          prev_value = next_value;
 
   - platform: sml
     sml_id: sml_heating
@@ -136,20 +84,6 @@ text_sensor:
     internal: true
     obis_code: "1-0:1.8.2"
     format: uint
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static int accumulator = 0;
-          static int prev_value;
-          int next_value = stoi(x);
-          if (initialized) {
-            accumulator = (7 * accumulator + next_value - prev_value) / 8;
-            id(heating_power_night).publish_state(accumulator / 10.0);
-            id(heating_power_night).update();
-          }
-          initialized = true;
-          prev_value = next_value;
 
 sensor:
   - platform: sml
@@ -179,45 +113,6 @@ sensor:
       - or:
         - heartbeat: 30s
         - delta: 0.1
-
-  - platform: template
-    id: raw_home_net_energy
-    internal: true
-    filters:
-      - multiply: 0.1
-    on_value:
-      then:
-      - lambda: |-
-          static bool initialized = false;
-          static long prev_millis = 0;
-          static float prev_value = 0;
-          long now = millis();
-          long dmillis = now - prev_millis;
-          if (initialized) {
-            if (x != prev_value && dmillis >= 1000) {
-              float v = (x - prev_value) * 3600000.0 / dmillis;
-              id(home_net_power).publish_state(v);
-              prev_millis = now;
-              prev_value = x;
-            }
-          } else {
-            initialized = true;
-            prev_millis = now;
-            prev_value = x;
-          }
-
-
-  - platform: template
-    id: home_net_power
-    name: "Home Net Power"
-    unit_of_measurement: W
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 1
-    filters:
-      - exponential_moving_average:
-          alpha: 0.2
-          send_every: 1
 
   - platform: sml
     sml_id: sml_heating
@@ -259,29 +154,70 @@ sensor:
         - delta: 0.1
       - multiply: 0.0001
 
-  - platform: template
-    id: heating_power_total
-    name: "Heating Total Power"
-    unit_of_measurement: W
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 1
+  - platform: custom
+    lambda: |-
+      auto home_consumed_reader = new NumericTextDifferentialReader(id(txt_home_consumed_energy));
+      auto home_returned_reader = new NumericTextDifferentialReader(id(txt_home_returned_energy));
+      auto home_net_reader = new SubstractReader(home_consumed_reader, home_returned_reader);
+      auto heat_total_reader = new NumericTextDifferentialReader(id(txt_heating_consumed_energy_total));
+      auto heat_day_reader = new NumericTextDifferentialReader(id(txt_heating_consumed_energy_day));
+      auto heat_night_reader = new NumericTextDifferentialReader(id(txt_heating_consumed_energy_night));
 
-  - platform: template
-    id: heating_power_day
-    name: "Heating HT Power (day)"
-    unit_of_measurement: W
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 1
+      auto home_net_sensor = new ReaderSensor(home_net_reader, 1000);
+      auto heat_total_sensor = new ReaderSensor(heat_total_reader);
+      auto heat_day_sensor = new ReaderSensor(heat_day_reader);
+      auto heat_night_sensor = new ReaderSensor(heat_night_reader);
 
-  - platform: template
-    id: heating_power_night
-    name: "Heating NT Power (night)"
-    unit_of_measurement: W
-    device_class: power
-    state_class: measurement
-    accuracy_decimals: 1
+      std::vector<Component *> components = {home_net_sensor, heat_total_sensor, heat_day_sensor, heat_night_sensor};
+      for (Component *c : components) {
+         App.register_component(c);
+      }
+      return {home_net_sensor, heat_total_sensor, heat_day_sensor, heat_night_sensor};
+
+    sensors:
+      - name: "Home Net Power"
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        accuracy_decimals: 1
+        filters:
+          - exponential_moving_average:
+              alpha: 0.1
+              send_every: 10
+          - multiply: 360.0
+
+      - name: "Heating Total Power"
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        accuracy_decimals: 1
+        filters:
+          - exponential_moving_average:
+              alpha: 0.1
+              send_every: 10
+          - multiply: 360.0
+
+      - name: "Heating HT Power (day)"
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        accuracy_decimals: 1
+        filters:
+          - exponential_moving_average:
+              alpha: 0.1
+              send_every: 10
+          - multiply: 360.0
+
+      - name: "Heating NT Power (night)"
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        accuracy_decimals: 1
+        filters:
+          - exponential_moving_average:
+              alpha: 0.1
+              send_every: 10
+          - multiply: 360.0
 
   - platform: uptime
     name: Uptime Sensor
