@@ -1,39 +1,12 @@
-substitutions:
-  host_name: my-device
-  node_name: My Device
-
-esphome:
-  name: ${host_name}
+packages:
+  minimal: !include minimal.yaml
 
 # Enable Home Assistant API
 api:
   encryption:
     key: !secret api_key
 
-ota:
-  password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "${host_name}-portal"
-    password: !secret ap_password 
-
 captive_portal:
-
-sensor:
-  - platform: uptime
-    name: ${node_name} Uptime
-  - platform: wifi_signal
-    name: "${node_name} WiFi Signal dB"
-    update_interval: 60s
-
-button:
-  - platform: restart
-    name: "${node_name} Reboot"
 
 web_server:
   port: 80

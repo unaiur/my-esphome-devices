@@ -17,3 +17,13 @@ wifi:
     ssid: "${host_name}-portal"
     password: !secret ap_password 
 
+sensor:
+  - platform: uptime
+    name: ${node_name} Uptime
+  - platform: wifi_signal
+    name: "${node_name} WiFi Signal dB"
+    update_interval: 60s
+
+button:
+  - platform: restart
+    name: "${node_name} Reboot"
