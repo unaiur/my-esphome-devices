@@ -9,3 +9,4 @@ packages:
       gateway: 192.168.178.1
       input: swapped
       log_level: DEBUG
+  reboot_at_night: !include common/reboot-at-night.yaml

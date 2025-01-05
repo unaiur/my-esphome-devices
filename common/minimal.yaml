@@ -31,4 +31,5 @@ sensor:
 
 button:
   - platform: restart
+    id: restart_button
     name: "${node_name} Reboot"

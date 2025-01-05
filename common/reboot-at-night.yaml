@@ -1,0 +1,9 @@
+time:
+  - id: !extend time_sensor
+    on_time:
+      # Restart every day at 2.30
+      - seconds: 0
+        minutes: 30
+        hours: 2
+        then:
+          - button.press: restart_button
