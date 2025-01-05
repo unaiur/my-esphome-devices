@@ -1,14 +1,14 @@
 substitutions:
-  host_name: livingroom-right-cover
-  node_name: Livingroom Right Cover
-  input: swapped
-  output: swapped
 
 packages:
-  cover: !include common/shelly-2.5-cover.yaml
+  cover: !include
+    file: common/shelly-2.5-cover.yaml
+    vars:
+      host_name: livingroom-right-cover
+      node_name: Livingroom Right Cover
+      static_ip: 192.168.178.18
+      subnet: 255.255.255.0
+      gateway: 192.168.178.1
+      input: swapped
+      output: swapped
 
-wifi:
-  manual_ip:
-    static_ip: 192.168.178.18
-    gateway: 192.168.178.1
-    subnet: 255.255.255.0

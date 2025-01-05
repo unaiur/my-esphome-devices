@@ -1,9 +1,9 @@
-substitutions:
-  host_name: studio-light
-  node_name: Studio Light
-
 packages:
-  cover: !include common/shelly-1-light.yaml
+  cover: !include
+    file: common/shelly-1-light.yaml
+    vars:
+      host_name: studio-light
+      node_name: Studio Light
 
 wifi:
   manual_ip:

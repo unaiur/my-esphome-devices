@@ -1,35 +1,52 @@
-substitutions:
-  # Input mode: straight or swapped
+# Required Variables
+#  * node_name: The name of this node. For example: "My Device"
+#  * host_name: Adaptation of the node_name to follow DNS rules. For example: "my-device"
+#  * static_ip: IP host address to use in the device
+#  * subnet: IP subnet address mask
+#  * gateway: IP address of the router or gateway
+
+defaults:
+  # Log level default value is INFO.
+  log_level: INFO
+  # How are output relays wired: straight or swapped
+  output: straight
+  # How are input buttons wired: straight or swapped
   input: straight
   # Should the open input be inverted
   invert_open_input: "false"
   # Should the close input be inverted
   invert_close_input: "false"
-  # Output mode: straight or swapped
-  output: straight
+  
+
+substitutions:
   # Computed substitutions: DO NOT REDEFINE!!!
-  open_pin_when_input_is_straight: GPIO13
-  close_pin_when_input_is_straight: GPIO5
-  open_pin_when_input_is_swapped: GPIO5
-  close_pin_when_input_is_swapped: GPIO13
-  open_pin_when_output_is_straight: GPIO15
-  close_pin_when_output_is_straight: GPIO4
-  open_current_channel_when_output_is_straight: a
-  close_current_channel_when_output_is_straight: b
-  open_pin_when_output_is_swapped: GPIO4
-  close_pin_when_output_is_swapped: GPIO15
-  open_current_channel_when_output_is_swapped: b
-  close_current_channel_when_output_is_swapped: a
+  shelly_25_cover_open_pin_when_input_is_straight: GPIO13
+  shelly_25_cover_close_pin_when_input_is_straight: GPIO5
+  shelly_25_cover_open_pin_when_input_is_swapped: GPIO5
+  shelly_25_cover_close_pin_when_input_is_swapped: GPIO13
+  shelly_25_cover_open_pin_when_output_is_straight: GPIO15
+  shelly_25_cover_close_pin_when_output_is_straight: GPIO4
+  shelly_25_cover_open_current_channel_when_output_is_straight: a
+  shelly_25_cover_close_current_channel_when_output_is_straight: b
+  shelly_25_cover_open_pin_when_output_is_swapped: GPIO4
+  shelly_25_cover_close_pin_when_output_is_swapped: GPIO15
+  shelly_25_cover_open_current_channel_when_output_is_swapped: b
+  shelly_25_cover_close_current_channel_when_output_is_swapped: a
 
 packages:
-  base: !include base.yaml
+  plat: !include
+    file: esp8266.yaml
+    vars:
+      host_name: ${host_name}
+      node_name: ${node_name}
+      log_level: ${log_level}
+  base: !include ha.yaml
 
-esp8266:
-  board: esp01_1m
-  restore_from_flash: true
-
-logger:
-  hardware_uart: UART0
+wifi:
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: ${gateway}
+    subnet: ${subnet}
 
 i2c:
   sda: GPIO12
@@ -45,24 +62,24 @@ sensor:
             window_size: 120
             send_every: 30
 
-    active_power_${open_current_channel_when_output_is_${output}}:
+    active_power_${shelly_25_cover_open_current_channel_when_output_is_${output}}:
       name: ${node_name} Open Power
       filters:
         - lambda: return abs(x);
         - sliding_window_moving_average:
             window_size: 120
             send_every: 30
-    active_power_${close_current_channel_when_output_is_${output}}:
+    active_power_${shelly_25_cover_close_current_channel_when_output_is_${output}}:
       name: ${node_name} Close Power
       filters:
         - lambda: return abs(x);
         - sliding_window_moving_average:
             window_size: 120
             send_every: 30
-    current_${open_current_channel_when_output_is_${output}}:
+    current_${shelly_25_cover_open_current_channel_when_output_is_${output}}:
       id: open_current
       internal: true
-    current_${close_current_channel_when_output_is_${output}}:
+    current_${shelly_25_cover_close_current_channel_when_output_is_${output}}:
       id: close_current
       internal: true
     update_interval: 0.5s
@@ -98,7 +115,7 @@ sensor:
 binary_sensor:
   - platform: gpio
     pin:
-      number: ${open_pin_when_input_is_${input}}
+      number: ${shelly_25_cover_open_pin_when_input_is_${input}}
       inverted: ${invert_open_input} 
     name: ${node_name} Open Button
     internal: true
@@ -118,7 +135,7 @@ binary_sensor:
 
   - platform: gpio
     pin:
-      number: ${close_pin_when_input_is_${input}}
+      number: ${shelly_25_cover_close_pin_when_input_is_${input}}
       inverted: ${invert_close_input} 
     name: ${node_name} Close Button
     internal: true
@@ -143,16 +160,14 @@ switch:
 
   - platform: gpio
     id: open_relay
-    pin: ${open_pin_when_output_is_${output}}
-    restore_mode: RESTORE_DEFAULT_OFF
+    pin: ${shelly_25_cover_open_pin_when_output_is_${output}}
     internal: true
     interlock: &interlock [open_relay, close_relay]
     interlock_wait_time: 500ms
 
   - platform: gpio
     id: close_relay
-    pin: ${close_pin_when_output_is_${output}}
-    restore_mode: RESTORE_DEFAULT_OFF
+    pin: ${shelly_25_cover_close_pin_when_output_is_${output}}
     internal: true
     interlock: *interlock
     interlock_wait_time: 500ms

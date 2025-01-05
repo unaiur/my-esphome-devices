@@ -1,0 +1,27 @@
+# Required Substitutions
+#  * node_name: The name of this node. For example: "My Device"
+#  * host_name: Adaptation of the node_name to follow DNS rules. For example: "my-device"
+
+defaults:
+  # Log level default value is INFO.
+  log_level: INFO
+  # Do not store state in flash to survive restarts.
+  restore_from_flash: "false"
+
+packages:
+  minimal: !include
+    file: minimal.yaml
+    vars:
+      host_name: ${host_name}
+      node_name: ${node_name}
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: ${restore_from_flash}
+
+wifi:
+  power_save_mode: high
+
+logger:
+  hardware_uart: UART0
+  level: ${log_level}

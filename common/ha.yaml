@@ -1,0 +1,10 @@
+# Enables Home Assistant API and the web server
+api:
+  encryption:
+    key: !secret api_key
+
+web_server:
+  port: 80
+  auth:
+    username: !secret web_server_username
+    password: !secret web_server_password

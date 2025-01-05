@@ -1,15 +1,22 @@
-substitutions:
+# Required Variables
+#  * node_name: The name of this node. For example: "My Device"
+#  * host_name: Adaptation of the node_name to follow DNS rules. For example: "my-device"
+
+defaults:
+  # Log level default value is INFO.
+  log_level: INFO
   # Should the open input be inverted
   invert_input: "false"
 
 packages:
-  base: !include base.yaml
-
-esp8266:
-  board: esp01_1m
-
-logger:
-  hardware_uart: UART0
+  plat: !include
+    file: esp8266.yaml
+    vars:
+      host_name: ${host_name}
+      node_name: ${node_name}
+      log_level: ${log_level}
+      restore_from_flash: true
+  base: !include ha.yaml
 
 binary_sensor:
   - platform: gpio
@@ -29,6 +36,7 @@ light:
     name: Studio Light
     output: the_relay
     id: the_light
+    restore_mode: RESTORE_DEFAULT_OFF
 
 output:
   - platform: gpio

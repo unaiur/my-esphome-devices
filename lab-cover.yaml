@@ -1,13 +1,10 @@
-substitutions:
-  host_name: lab-cover
-  node_name: Lab Cover
-  invert_open_input: "true"
-
 packages:
-  cover: !include common/shelly-2.5-cover.yaml
-
-wifi:
-  manual_ip:
-    static_ip: 192.168.178.16
-    gateway: 192.168.178.1
-    subnet: 255.255.255.0
+  cover: !include
+    file: common/shelly-2.5-cover.yaml
+    vars:
+      host_name: lab-cover
+      node_name: Lab Cover
+      static_ip: 192.168.178.16
+      subnet: 255.255.255.0
+      gateway: 192.168.178.1
+      invert_open_input: "true"

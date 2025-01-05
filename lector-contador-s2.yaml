@@ -2,12 +2,13 @@ esphome:
   includes:
     - "custom/Readers.h"
 
-substitutions:
-  host_name: lector-contador-s2
-  node_name: lector-contador-s2
-
 packages:
-  base: !include common/base.yaml
+  base: !include
+    file: common/minimal.yaml
+    vars:
+      host_name: lector-contador-s2
+      node_name: lector-contador-s2
+  ha: !include common/ha.yaml
 
 esp32:
   board: lolin_s2_mini
@@ -17,7 +18,6 @@ esp32:
 
 # Enable logging
 logger:
-  #level: VERY_VERBOSE
   hardware_uart: USB_CDC
 
 uart:

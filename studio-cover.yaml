@@ -1,13 +1,11 @@
-substitutions:
-  host_name: studio-cover
-  node_name: Studio Cover
-  input: swapped
-
 packages:
-  cover: !include common/shelly-2.5-cover.yaml
-
-wifi:
-  manual_ip:
-    static_ip: 192.168.178.15
-    gateway: 192.168.178.1
-    subnet: 255.255.255.0
+  cover: !include
+    file: common/shelly-2.5-cover.yaml
+    vars:
+      host_name: studio-cover
+      node_name: Studio Cover
+      static_ip: 192.168.178.15
+      subnet: 255.255.255.0
+      gateway: 192.168.178.1
+      input: swapped
+      log_level: DEBUG

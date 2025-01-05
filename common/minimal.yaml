@@ -1,6 +1,6 @@
-substitutions:
-  host_name: my-device
-  node_name: My Device
+# Required Variables
+#  * node_name: The name of this node. For example: "My Device"
+#  * host_name: Adaptation of the node_name to follow DNS rules. For example: "my-device"
 
 esphome:
   name: ${host_name}
@@ -18,9 +18,13 @@ wifi:
     ssid: "${host_name}-portal"
     password: !secret ap_password 
 
+captive_portal:
+
 sensor:
   - platform: uptime
     name: ${node_name} Uptime
+    update_interval: 60s
+
   - platform: wifi_signal
     name: "${node_name} WiFi Signal dB"
     update_interval: 60s

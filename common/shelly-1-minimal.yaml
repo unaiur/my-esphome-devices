@@ -1,6 +1,6 @@
 packages:
-  base: !include minimal.yaml
-
-esp8266:
-  board: esp01_1m
-
+  plat: !include
+    file: esp8266.yaml
+    vars:
+      host_name: ${host_name}
+      node_name: ${node_name}
