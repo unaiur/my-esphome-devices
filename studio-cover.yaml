@@ -10,3 +10,4 @@ packages:
       input: swapped
       log_level: DEBUG
   reboot_at_night: !include common/reboot-at-night.yaml
+  debug: !include common/debug.yaml
