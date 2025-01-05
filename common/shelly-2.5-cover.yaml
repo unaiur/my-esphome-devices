@@ -16,7 +16,6 @@ defaults:
   invert_open_input: "false"
   # Should the close input be inverted
   invert_close_input: "false"
-  
 
 substitutions:
   # Computed substitutions: DO NOT REDEFINE!!!
@@ -51,38 +50,40 @@ wifi:
 i2c:
   sda: GPIO12
   scl: GPIO14
+  frequency: 100kHz
 
 sensor:
   - platform: ade7953_i2c
+    id: power_sensor
     irq_pin: GPIO16
     voltage:
       name: ${node_name} Voltage
       filters:
         - sliding_window_moving_average:
-            window_size: 120
-            send_every: 30
+            window_size: 20
+            send_every: 5
 
     active_power_${shelly_25_cover_open_current_channel_when_output_is_${output}}:
       name: ${node_name} Open Power
       filters:
         - lambda: return abs(x);
         - sliding_window_moving_average:
-            window_size: 120
-            send_every: 30
+            window_size: 20
+            send_every: 5
     active_power_${shelly_25_cover_close_current_channel_when_output_is_${output}}:
       name: ${node_name} Close Power
       filters:
         - lambda: return abs(x);
         - sliding_window_moving_average:
-            window_size: 120
-            send_every: 30
+            window_size: 20
+            send_every: 5
     current_${shelly_25_cover_open_current_channel_when_output_is_${output}}:
       id: open_current
       internal: true
     current_${shelly_25_cover_close_current_channel_when_output_is_${output}}:
       id: close_current
       internal: true
-    update_interval: 0.5s
+    update_interval: 30s
 
   # NTC Temperature
   - platform: ntc
@@ -116,7 +117,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: ${shelly_25_cover_open_pin_when_input_is_${input}}
-      inverted: ${invert_open_input} 
+      inverted: ${invert_open_input}
     name: ${node_name} Open Button
     internal: true
     filters:
@@ -136,7 +137,7 @@ binary_sensor:
   - platform: gpio
     pin:
       number: ${shelly_25_cover_close_pin_when_input_is_${input}}
-      inverted: ${invert_close_input} 
+      inverted: ${invert_close_input}
     name: ${node_name} Close Button
     internal: true
     filters:
@@ -179,24 +180,46 @@ cover:
     id: my_cover
 
     open_sensor: open_current
-    open_moving_current_threshold: 0.4
+    open_moving_current_threshold: 0.3
+    open_obstacle_current_threshold: 0.8
     open_duration: 29s
     open_action:
+      - script.execute: fast_power_sampling
       - switch.turn_on: open_relay
     close_sensor: close_current
-    close_moving_current_threshold: 0.4
+    close_moving_current_threshold: 0.3
+    close_obstacle_current_threshold: 0.8
     close_duration: 29s
     close_action:
+      - script.execute: fast_power_sampling
       - switch.turn_on: close_relay
     stop_action:
       - switch.turn_off: close_relay
       - switch.turn_off: open_relay
+      - script.execute: slow_power_sampling
     obstacle_rollback: 30%
     start_sensing_delay: 1s
     malfunction_detection: true
     malfunction_action:
       then:
         - logger.log: "Malfunction detected. Relay welded."
+
+script:
+  - id: fast_power_sampling
+    mode: restart
+    then:
+      - script.stop: slow_power_sampling
+      - component.resume:
+          id: power_sensor
+          update_interval: 0.5s
+
+  - id: slow_power_sampling
+    mode: restart
+    then:
+      - delay: 30s
+      - component.resume:
+          id: power_sensor
+          update_interval: 30s
 
 status_led:
   pin:
