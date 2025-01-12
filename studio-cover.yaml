@@ -11,3 +11,13 @@ packages:
       log_level: DEBUG
   reboot_at_night: !include common/reboot-at-night.yaml
   debug: !include common/debug.yaml
+
+external_components:
+  - source:
+      type: local
+      path: external_components
+
+binary_sensor:
+  - platform: gpio_monitor
+    name: gpio_monitor
+    pin: GPIO10
