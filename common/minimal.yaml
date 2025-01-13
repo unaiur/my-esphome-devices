@@ -33,3 +33,8 @@ button:
   - platform: restart
     id: restart_button
     name: "${node_name} Reboot"
+
+external_components:
+  - source:
+      type: local
+      path: external_components
