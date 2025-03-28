@@ -8,11 +8,5 @@ packages:
       subnet: 255.255.255.0
       gateway: 192.168.178.1
       input: swapped
-      log_level: DEBUG
-  reboot_at_night: !include common/reboot-at-night.yaml
+      log_level: INFO
   debug: !include common/debug.yaml
-
-binary_sensor:
-  - platform: gpio_monitor
-    name: gpio_monitor
-    pin: GPIO10
